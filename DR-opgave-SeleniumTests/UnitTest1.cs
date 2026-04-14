@@ -103,10 +103,106 @@ public class UnitTest1 : IDisposable
         _driver.Navigate().GoToUrl(_baseUrl);
 
         var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
-        wait.Until(d => d.FindElement(By.Id("sort-select")));
+        wait.Until(d => d.FindElement(By.Id("sort-column")));
 
-        var sortSelect = _driver.FindElement(By.Id("sort-select"));
+        var sortSelect = _driver.FindElement(By.Id("sort-column"));
         Assert.NotNull(sortSelect);
+    }
+
+    [Fact]
+    public void Frontpage_Has_SortOrder_Buttons()
+    {
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.CssSelector(".segmented")));
+
+        var sortButtons = _driver.FindElements(By.CssSelector(".segmented button"));
+        Assert.Equal(2, sortButtons.Count);
+    }
+
+    [Fact]
+    public void Frontpage_Has_Refresh_Button()
+    {
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.TagName("body")));
+
+        var refreshButton = _driver.FindElement(By.XPath("//button[normalize-space()='Refresh']"));
+        Assert.NotNull(refreshButton);
+    }
+
+    [Fact]
+    public void Frontpage_Has_Records_Table()
+    {
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.TagName("table")));
+
+        var table = _driver.FindElement(By.TagName("table"));
+        Assert.NotNull(table);
+    }
+
+    [Fact]
+    public void Frontpage_Has_Filter_TextInput()
+    {
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='Search text']")));
+
+        var input = _driver.FindElement(By.CssSelector("input[placeholder='Search text']"));
+        Assert.NotNull(input);
+    }
+
+    [Fact]
+    public void Frontpage_Has_Filter_GenreInput()
+    {
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='Rock, Jazz, Pop...']")));
+
+        var input = _driver.FindElement(By.CssSelector("input[placeholder='Rock, Jazz, Pop...']"));
+        Assert.NotNull(input);
+    }
+
+    [Fact]
+    public void Frontpage_Has_Filter_MinYearInput()
+    {
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='1960']")));
+
+        var input = _driver.FindElement(By.CssSelector("input[placeholder='1960']"));
+        Assert.NotNull(input);
+    }
+
+    [Fact]
+    public void Frontpage_Has_Filter_MaxYearInput()
+    {
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='2026']")));
+
+        var input = _driver.FindElement(By.CssSelector("input[placeholder='2026']"));
+        Assert.NotNull(input);
+    }
+
+    [Fact]
+    public void Frontpage_Has_ClearFilters_Button()
+    {
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.ClassName("btn-clear")));
+
+        var clearButton = _driver.FindElement(By.ClassName("btn-clear"));
+        Assert.NotNull(clearButton);
     }
 
     public void Dispose()
