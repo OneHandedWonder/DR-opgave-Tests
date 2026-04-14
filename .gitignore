@@ -1,0 +1,14 @@
+# Build outputs
+**/bin/
+**/obj/
+
+# Test artifacts
+**/TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# IDE/user-specific
+.vs/
+*.user
+*.suo
