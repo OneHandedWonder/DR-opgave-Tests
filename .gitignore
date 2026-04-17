@@ -12,3 +12,4 @@
 .vs/
 *.user
 *.suo
+.env
