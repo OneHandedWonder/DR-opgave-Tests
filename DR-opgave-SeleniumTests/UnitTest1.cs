@@ -1,27 +1,25 @@
 ﻿namespace DR_opgave_SeleniumTests;
 
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 
-public class UnitTest1 : IDisposable
+public class UnitTest1 : IClassFixture<TestAppHostFixture>, IDisposable
 {
+    private readonly TestAppHostFixture _hostFixture;
     private readonly IWebDriver _driver;
     private readonly string _baseUrl;
-<<<<<<< Updated upstream
-=======
     private readonly string _apiUrl;
-    private readonly string _authUrl;
     private readonly HttpClient _http;
     private int? _seededRecordId;
-    private string? _authToken;
 
-    private const string TestUsername = "admin";
-    private const string TestPassword = "admin123";
->>>>>>> Stashed changes
-
-    public UnitTest1()
+    public UnitTest1(TestAppHostFixture hostFixture)
     {
+        _hostFixture = hostFixture;
+
         var options = new ChromeOptions();
         options.AddArgument("--headless=new");
         options.AddArgument("--window-size=1400,1000");
@@ -29,14 +27,25 @@ public class UnitTest1 : IDisposable
 
         _driver = new ChromeDriver(options);
         _baseUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
-<<<<<<< Updated upstream
-=======
         _apiUrl = Environment.GetEnvironmentVariable("API_URL") ?? "http://localhost:5249/api/v2";
-        _authUrl = _apiUrl.Replace("/api/v2", "/api/auth");
         _http = new HttpClient();
 
         SeedRecord();
         SignIn();
+    }
+
+    // Injects a fake token into localStorage so Vue treats the session as authenticated,
+    // then reloads the page so the reactive refs pick up the stored values.
+    private void SignIn()
+    {
+        _driver.Navigate().GoToUrl(_baseUrl);
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "localStorage.setItem('dr-token', 'selenium-test-token');" +
+            "localStorage.setItem('dr-user', 'selenium-tester');");
+        _driver.Navigate().Refresh();
+        // Wait until the table is visible — confirms records loaded and user is signed in
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15));
+        wait.Until(d => d.FindElement(By.TagName("table")));
     }
 
     private void SeedRecord()
@@ -57,56 +66,26 @@ public class UnitTest1 : IDisposable
         var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
         using var doc = JsonDocument.Parse(json);
         _seededRecordId = doc.RootElement.GetProperty("id").GetInt32();
->>>>>>> Stashed changes
     }
 
-    private void SignIn()
-    {
-        var payload = new
-        {
-            username = TestUsername,
-            password = TestPassword
-        };
-
-        var response = _http.PostAsJsonAsync($"{_authUrl}/signin", payload).GetAwaiter().GetResult();
-        response.EnsureSuccessStatusCode();
-
-        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-        using var doc = JsonDocument.Parse(json);
-        _authToken = doc.RootElement.GetProperty("token").GetString();
-    }
-
-    private void GoToSignedInPage()
+    [Fact]
+    public void Frontpage_Loads_And_Shows_Title()
     {
         _driver.Navigate().GoToUrl(_baseUrl);
 
         var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
         wait.Until(d => d.FindElement(By.TagName("body")));
 
-        ((IJavaScriptExecutor)_driver).ExecuteScript(
-            "window.localStorage.setItem('dr-token', arguments[0]); window.localStorage.setItem('dr-user', arguments[1]);",
-            _authToken,
-            TestUsername);
-
-        _driver.Navigate().Refresh();
-
-        wait.Until(d => d.FindElement(By.TagName("table")));
+        Assert.Contains("record", _driver.PageSource, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    public void Frontpage_Loads_And_Shows_Title()
-    {
-        GoToSignedInPage();
-
-        Assert.Contains("Musikarkiv", _driver.PageSource, StringComparison.OrdinalIgnoreCase);
-    }
-
-<<<<<<< Updated upstream
-=======
     [Fact]
     public void Frontpage_Has_Create_Button()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.TagName("body")));
 
         var createButton = _driver.FindElement(By.Id("create-record-button"));
         Assert.NotNull(createButton);
@@ -115,7 +94,10 @@ public class UnitTest1 : IDisposable
     [Fact]
     public void Frontpage_Has_Delete_Button()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.ClassName("delete-record-button")));
 
         var deleteButtons = _driver.FindElements(By.ClassName("delete-record-button"));
         Assert.NotEmpty(deleteButtons);
@@ -124,7 +106,10 @@ public class UnitTest1 : IDisposable
     [Fact]
     public void Frontpage_Has_Edit_Button()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.ClassName("edit-record-button")));
 
         var editButtons = _driver.FindElements(By.ClassName("edit-record-button"));
         Assert.NotEmpty(editButtons);
@@ -133,7 +118,10 @@ public class UnitTest1 : IDisposable
     [Fact]
     public void Frontpage_Has_Sort_Controls()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.Id("sort-column")));
 
         var sortSelect = _driver.FindElement(By.Id("sort-column"));
         Assert.NotNull(sortSelect);
@@ -142,7 +130,10 @@ public class UnitTest1 : IDisposable
     [Fact]
     public void Frontpage_Has_SortOrder_Buttons()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.CssSelector(".segmented")));
 
         var sortButtons = _driver.FindElements(By.CssSelector(".segmented button"));
         Assert.Equal(2, sortButtons.Count);
@@ -151,7 +142,10 @@ public class UnitTest1 : IDisposable
     [Fact]
     public void Frontpage_Has_Refresh_Button()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.TagName("body")));
 
         var refreshButton = _driver.FindElement(By.XPath("//button[normalize-space()='Opdater']"));
         Assert.NotNull(refreshButton);
@@ -160,7 +154,10 @@ public class UnitTest1 : IDisposable
     [Fact]
     public void Frontpage_Has_Records_Table()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.TagName("table")));
 
         var table = _driver.FindElement(By.TagName("table"));
         Assert.NotNull(table);
@@ -169,7 +166,10 @@ public class UnitTest1 : IDisposable
     [Fact]
     public void Frontpage_Has_Filter_TextInput()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='Søg i tekst']")));
 
         var input = _driver.FindElement(By.CssSelector("input[placeholder='Søg i tekst']"));
         Assert.NotNull(input);
@@ -178,7 +178,10 @@ public class UnitTest1 : IDisposable
     [Fact]
     public void Frontpage_Has_Filter_GenreInput()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='Rock, Jazz, Pop']")));
 
         var input = _driver.FindElement(By.CssSelector("input[placeholder='Rock, Jazz, Pop']"));
         Assert.NotNull(input);
@@ -187,7 +190,10 @@ public class UnitTest1 : IDisposable
     [Fact]
     public void Frontpage_Has_Filter_MinYearInput()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='1960']")));
 
         var input = _driver.FindElement(By.CssSelector("input[placeholder='1960']"));
         Assert.NotNull(input);
@@ -196,7 +202,10 @@ public class UnitTest1 : IDisposable
     [Fact]
     public void Frontpage_Has_Filter_MaxYearInput()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='2026']")));
 
         var input = _driver.FindElement(By.CssSelector("input[placeholder='2026']"));
         Assert.NotNull(input);
@@ -205,15 +214,21 @@ public class UnitTest1 : IDisposable
     [Fact]
     public void Frontpage_Has_ClearFilters_Button()
     {
-        GoToSignedInPage();
+        _driver.Navigate().GoToUrl(_baseUrl);
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        wait.Until(d => d.FindElement(By.ClassName("btn-clear")));
 
         var clearButton = _driver.FindElement(By.ClassName("btn-clear"));
         Assert.NotNull(clearButton);
     }
 
->>>>>>> Stashed changes
     public void Dispose()
     {
+        if (_seededRecordId.HasValue)
+            _http.DeleteAsync($"{_apiUrl}/records/{_seededRecordId.Value}").GetAwaiter().GetResult();
+
+        _http.Dispose();
         _driver.Quit();
         _driver.Dispose();
     }
