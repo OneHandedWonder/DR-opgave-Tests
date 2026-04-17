@@ -28,6 +28,21 @@ public class UnitTest1 : IDisposable
         _http = new HttpClient();
 
         SeedRecord();
+        SignIn();
+    }
+
+    // Injects a fake token into localStorage so Vue treats the session as authenticated,
+    // then reloads the page so the reactive refs pick up the stored values.
+    private void SignIn()
+    {
+        _driver.Navigate().GoToUrl(_baseUrl);
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "localStorage.setItem('dr-token', 'selenium-test-token');" +
+            "localStorage.setItem('dr-user', 'selenium-tester');");
+        _driver.Navigate().Refresh();
+        // Wait until the table is visible — confirms records loaded and user is signed in
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15));
+        wait.Until(d => d.FindElement(By.TagName("table")));
     }
 
     private void SeedRecord()
@@ -129,7 +144,7 @@ public class UnitTest1 : IDisposable
         var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
         wait.Until(d => d.FindElement(By.TagName("body")));
 
-        var refreshButton = _driver.FindElement(By.XPath("//button[normalize-space()='Refresh']"));
+        var refreshButton = _driver.FindElement(By.XPath("//button[normalize-space()='Opdater']"));
         Assert.NotNull(refreshButton);
     }
 
@@ -151,9 +166,9 @@ public class UnitTest1 : IDisposable
         _driver.Navigate().GoToUrl(_baseUrl);
 
         var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
-        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='Search text']")));
+        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='Søg i tekst']")));
 
-        var input = _driver.FindElement(By.CssSelector("input[placeholder='Search text']"));
+        var input = _driver.FindElement(By.CssSelector("input[placeholder='Søg i tekst']"));
         Assert.NotNull(input);
     }
 
@@ -163,9 +178,9 @@ public class UnitTest1 : IDisposable
         _driver.Navigate().GoToUrl(_baseUrl);
 
         var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
-        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='Rock, Jazz, Pop...']")));
+        wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='Rock, Jazz, Pop']")));
 
-        var input = _driver.FindElement(By.CssSelector("input[placeholder='Rock, Jazz, Pop...']"));
+        var input = _driver.FindElement(By.CssSelector("input[placeholder='Rock, Jazz, Pop']"));
         Assert.NotNull(input);
     }
 
